@@ -1,0 +1,10 @@
+.DS_Store
+.build/
+dist/
+DerivedData/
+xcuserdata/
+*.xcuserdatad/
+*.xcuserstate
+Package.resolved
+patch_xcode.py
+sources_test.patch
