@@ -8,7 +8,7 @@ The project includes a comprehensive suite of unit tests. Run them from the comm
 
 ### Command Line
 ```bash
-swift test
+scripts/verify_release_candidate.sh
 ```
 
 ### Xcode
@@ -39,3 +39,15 @@ To validate the export functions:
 2. Select **Export JSON** to verify the snapshot state serializes correctly.
 3. For 1D experiments, select **Export CSV** to verify the generation of density and potential values.
 4. Try to save these files locally to ensure the `fileExporter` workflow behaves correctly in macOS/iOS.
+
+## 4. TestFlight Candidate Gate
+
+Before creating a TestFlight beta archive, run:
+
+```bash
+scripts/verify_release_candidate.sh
+```
+
+This command runs SwiftPM tests, the core smoke executable, regenerates the Xcode project, checks generator drift, and builds the iOS simulator test bundle with signing disabled.
+
+See `docs/testflight_release.md` for the signed archive and optional upload flow.

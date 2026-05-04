@@ -222,7 +222,7 @@ let coreTargetSettings = buildSettings([
     ("GENERATE_INFOPLIST_FILE", "YES"),
     ("INFOPLIST_KEY_CFBundleDisplayName", "QuantumMechanicsLabCore"),
     ("INSTALL_PATH", "\"@rpath\""),
-    ("PRODUCT_BUNDLE_IDENTIFIER", "local.quantummechanicslab.core"),
+    ("PRODUCT_BUNDLE_IDENTIFIER", "io.github.oieryangjz.quantummechanicslab.core"),
     ("PRODUCT_NAME", "\"$(TARGET_NAME)\""),
     ("SKIP_INSTALL", "YES"),
     ("SUPPORTED_PLATFORMS", "\"iphoneos iphonesimulator\""),
@@ -244,7 +244,7 @@ let appTargetSettings = buildSettings([
     ("INFOPLIST_KEY_UILaunchScreen_Generation", "YES"),
     ("INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad", "\"UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight\""),
     ("MARKETING_VERSION", "0.1.0"),
-    ("PRODUCT_BUNDLE_IDENTIFIER", "local.quantummechanicslab"),
+    ("PRODUCT_BUNDLE_IDENTIFIER", "io.github.oieryangjz.quantummechanicslab"),
     ("PRODUCT_NAME", "QuantumMechanicsLab"),
     ("SUPPORTED_PLATFORMS", "\"iphoneos iphonesimulator\""),
     ("SUPPORTS_MACCATALYST", "NO"),
@@ -257,7 +257,7 @@ let appTargetSettings = buildSettings([
 
 let testsTargetSettings = buildSettings([
     ("CODE_SIGN_STYLE", "Automatic"),
-    ("PRODUCT_BUNDLE_IDENTIFIER", "local.quantummechanicslab.coretests"),
+    ("PRODUCT_BUNDLE_IDENTIFIER", "io.github.oieryangjz.quantummechanicslab.coretests"),
     ("PRODUCT_NAME", "\"$(TARGET_NAME)\""),
     ("SWIFT_VERSION", "6.0"),
     ("TARGETED_DEVICE_FAMILY", "2"),

@@ -5,6 +5,8 @@ All notable changes to this project will be documented in this file.
 ## [Unreleased]
 
 ### Added
+- GitHub CI workflow for SwiftPM tests, smoke tests, Xcode project drift checks, and iOS simulator `build-for-testing`.
+- TestFlight release architecture documentation and local archive/upload scripts.
 - True Metal Texture rendering (`MTKView` / `MTLTexture`) for the 2D Wavefunction Canvas, significantly improving performance.
 - Custom potential preset persistence using `UserDefaults` (`UserDefaultsProjectStore`).
 - Data Export capabilities: Export simulation snapshots to JSON and 1D simulation data (density/potential) to CSV.
