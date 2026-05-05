@@ -11,10 +11,17 @@ final class AppModel {
     var snapshot: SimulationSnapshot
     var isPlaying = false
     var playbackSpeed = 1.0
+    var timelineTime = 0.0
     var presets: [ExperimentPreset] = []
+
+    private var potentialUndoStack: [[Double]] = []
+    private let maxUndoSteps = 20
 
     private let store: LocalProjectStore
     @ObservationIgnored private var simulationActor: SimulationActor
+    @ObservationIgnored private var playbackTask: Task<Void, Never>?
+    @ObservationIgnored private var playbackGeneration = 0
+    @ObservationIgnored private var playbackFrameAnchor: SimulationSnapshot?
 
     init(experiments: [AnyExperiment] = ExperimentCatalog.all, store: LocalProjectStore = UserDefaultsProjectStore()) {
         self.experiments = experiments
@@ -32,6 +39,7 @@ final class AppModel {
         let initialSnapshot = initialExperiment.makeInitialSnapshot(parameters: initialExperiment.defaultParameters)
         self.selectedExperimentID = initialExperiment.id
         self.snapshot = initialSnapshot
+        self.timelineTime = initialSnapshot.time
         self.simulationActor = AppModel.makeSimulationActor(snapshot: initialSnapshot, parameters: initialExperiment.defaultParameters)
     }
 
@@ -50,11 +58,12 @@ final class AppModel {
     }
 
     func select(_ experiment: AnyExperiment) {
+        stopPlayback(resetActorToVisibleSnapshot: false)
         selectedExperimentID = experiment.id
         parameters = experiment.defaultParameters
         snapshot = experiment.makeInitialSnapshot(parameters: parameters)
+        syncTimelineToSnapshot()
         simulationActor = AppModel.makeSimulationActor(snapshot: snapshot, parameters: parameters)
-        isPlaying = false
         saveState()
     }
 
@@ -81,6 +90,7 @@ final class AppModel {
 
     func loadPreset(_ preset: ExperimentPreset) {
         guard let experiment = experiments.first(where: { $0.id == preset.experimentID }) else { return }
+        stopPlayback(resetActorToVisibleSnapshot: false)
         selectedExperimentID = experiment.id
         parameters = preset.parameters
         snapshot = experiment.makeInitialSnapshot(parameters: parameters)
@@ -125,15 +135,39 @@ final class AppModel {
                 )
             }
         }
+        syncTimelineToSnapshot()
         simulationActor = AppModel.makeSimulationActor(snapshot: snapshot, parameters: parameters)
-        isPlaying = false
         saveState()
     }
 
     func reset() {
+        stopPlayback(resetActorToVisibleSnapshot: false)
         snapshot = selectedExperiment.makeInitialSnapshot(parameters: parameters)
+        syncTimelineToSnapshot()
         simulationActor = AppModel.makeSimulationActor(snapshot: snapshot, parameters: parameters)
-        isPlaying = false
+    }
+
+    func exportConfig() -> SharedExperimentConfig {
+        SharedExperimentConfig(
+            experimentID: selectedExperimentID,
+            parameters: parameters,
+            customPotentialValues: snapshot.potential?.values
+        )
+    }
+
+    func importConfig(_ config: SharedExperimentConfig) {
+        guard let experiment = experiments.first(where: { $0.id == config.experimentID }) else { return }
+        stopPlayback(resetActorToVisibleSnapshot: false)
+        selectedExperimentID = experiment.id
+        parameters = config.parameters
+        snapshot = experiment.makeInitialSnapshot(parameters: parameters)
+        syncTimelineToSnapshot()
+        if let values = config.customPotentialValues {
+             applyCustomPotential(values)
+        } else {
+             simulationActor = AppModel.makeSimulationActor(snapshot: snapshot, parameters: parameters)
+        }
+        saveState()
     }
 
     func restoreDefaultParameters() {
@@ -142,26 +176,58 @@ final class AppModel {
     }
 
     func applyParameterChange() {
+        stopPlayback(resetActorToVisibleSnapshot: false)
         snapshot = selectedExperiment.makeInitialSnapshot(parameters: parameters)
+        syncTimelineToSnapshot()
         simulationActor = AppModel.makeSimulationActor(snapshot: snapshot, parameters: parameters)
-        isPlaying = false
     }
 
     func togglePlayback() {
-        isPlaying.toggle()
+        if isPlaying {
+            pausePlayback()
+        } else {
+            startPlayback()
+        }
+    }
+
+    func pausePlayback() {
+        stopPlayback(resetActorToVisibleSnapshot: true)
     }
 
     func stepOnce() async {
-        let baseSteps: Double = switch snapshot.grid {
-        case .oneD:
-            6
-        case .twoD:
-            1
-        case .orbital:
-            1
+        if isPlaying {
+            pausePlayback()
         }
-        let stepsPerFrame = max(1, Int((baseSteps * playbackSpeed).rounded()))
-        snapshot = await simulationActor.step(count: stepsPerFrame)
+
+        let generation = playbackGeneration
+        let actor = simulationActor
+        let nextSnapshot = await actor.step(count: 1)
+
+        guard generation == playbackGeneration, !isPlaying else {
+            await actor.reset(to: snapshot)
+            return
+        }
+
+        snapshot = nextSnapshot
+        syncTimelineToSnapshot()
+    }
+
+    func prepareForPotentialStroke() {
+        if let currentValues = snapshot.potential?.values {
+            potentialUndoStack.append(currentValues)
+            if potentialUndoStack.count > maxUndoSteps {
+                potentialUndoStack.removeFirst()
+            }
+        }
+    }
+
+    var canUndoPotential: Bool {
+        !potentialUndoStack.isEmpty
+    }
+
+    func undoPotential() {
+        guard let previous = potentialUndoStack.popLast() else { return }
+        applyCustomPotential(previous)
     }
 
     func paintCustomPotential(horizontalPosition: Double, verticalPosition: Double) {
@@ -242,6 +308,7 @@ final class AppModel {
 
     func collapseWavefunction(horizontalPosition: Double, verticalPosition: Double) {
         guard isPlaying else { return } // Collapse usually makes sense during evolution
+        stopPlayback(resetActorToVisibleSnapshot: false)
 
         let clampedX = min(max(horizontalPosition, 0), 1)
         let clampedY = min(max(verticalPosition, 0), 1)
@@ -325,6 +392,133 @@ final class AppModel {
 
         // Reset solver with collapsed state
         simulationActor = AppModel.makeSimulationActor(snapshot: snapshot, parameters: parameters)
+        startPlayback()
+    }
+
+    private func startPlayback() {
+        guard !isPlaying else { return }
+
+        playbackGeneration &+= 1
+        let generation = playbackGeneration
+        let actor = simulationActor
+        let visibleSnapshot = AppModel.snapshot(snapshot, withTime: max(timelineTime, snapshot.time))
+        snapshot = visibleSnapshot
+        timelineTime = visibleSnapshot.time
+
+        isPlaying = true
+        playbackTask?.cancel()
+        playbackTask = Task { [weak self] in
+            await self?.runPlaybackLoop(
+                generation: generation,
+                actor: actor,
+                startingFrom: visibleSnapshot
+            )
+        }
+    }
+
+    private func stopPlayback(resetActorToVisibleSnapshot: Bool) {
+        playbackGeneration &+= 1
+        isPlaying = false
+        playbackTask?.cancel()
+        playbackTask = nil
+        let anchoredSnapshot = playbackFrameAnchor
+        playbackFrameAnchor = nil
+
+        guard resetActorToVisibleSnapshot else { return }
+
+        let actor = simulationActor
+        let baseSnapshot = anchoredSnapshot ?? snapshot
+        let visibleSnapshot = AppModel.snapshot(baseSnapshot, withTime: max(timelineTime, baseSnapshot.time))
+        snapshot = visibleSnapshot
+        timelineTime = visibleSnapshot.time
+        Task {
+            await actor.reset(to: visibleSnapshot)
+        }
+    }
+
+    private func runPlaybackLoop(
+        generation: Int,
+        actor: SimulationActor,
+        startingFrom visibleSnapshot: SimulationSnapshot
+    ) async {
+        await actor.reset(to: visibleSnapshot)
+        timelineTime = max(timelineTime, visibleSnapshot.time)
+
+        let clock = ContinuousClock()
+        let timing = playbackTiming(for: visibleSnapshot)
+        let targetInterval = timing.frameInterval
+        var lastTick = clock.now
+
+        while shouldContinuePlayback(generation) {
+            let frameStart = clock.now
+            let elapsedSeconds = AppModel.seconds(from: frameStart - lastTick)
+            lastTick = frameStart
+            let speed = max(playbackSpeed, 0.05)
+            let requestedDeltaTime = elapsedSeconds * timing.simulationSecondsPerSecond * speed
+            let maxFrameDeltaTime = timing.simulationSecondsPerSecond * speed * AppModel.seconds(from: targetInterval) * 2
+            let elapsedSimulationTime = min(requestedDeltaTime, maxFrameDeltaTime)
+
+            if elapsedSimulationTime > 0 {
+                let frameAnchor = snapshot
+                playbackFrameAnchor = frameAnchor
+                let nextSnapshot = await actor.step(deltaTime: elapsedSimulationTime)
+                await Task.yield()
+
+                guard shouldContinuePlayback(generation) else {
+                    await actor.reset(to: frameAnchor)
+                    return
+                }
+
+                timelineTime = nextSnapshot.time
+                snapshot = nextSnapshot
+                playbackFrameAnchor = nil
+            }
+
+            let frameElapsed = clock.now - frameStart
+            if frameElapsed < targetInterval {
+                try? await Task.sleep(for: targetInterval - frameElapsed)
+            }
+        }
+    }
+
+    private func shouldContinuePlayback(_ generation: Int) -> Bool {
+        isPlaying && playbackGeneration == generation && !Task.isCancelled
+    }
+
+    private struct PlaybackTiming {
+        var stepsPerSecond: Double
+        var solverTimeStep: Double
+        var frameInterval: Duration = .milliseconds(8)
+
+        var simulationSecondsPerSecond: Double {
+            stepsPerSecond * solverTimeStep
+        }
+    }
+
+    private func playbackTiming(for snapshot: SimulationSnapshot) -> PlaybackTiming {
+        switch snapshot.grid {
+        case .oneD:
+            return PlaybackTiming(stepsPerSecond: 360, solverTimeStep: 0.002)
+        case .twoD:
+            return PlaybackTiming(stepsPerSecond: 30, solverTimeStep: 0.002)
+        case .orbital:
+            return PlaybackTiming(stepsPerSecond: 60, solverTimeStep: 0.05)
+        }
+    }
+
+    private static func seconds(from duration: Duration) -> Double {
+        let components = duration.components
+        return Double(components.seconds) + Double(components.attoseconds) / 1_000_000_000_000_000_000
+    }
+
+    private func syncTimelineToSnapshot() {
+        timelineTime = snapshot.time
+    }
+
+    private static func snapshot(_ snapshot: SimulationSnapshot, withTime time: Double) -> SimulationSnapshot {
+        var copy = snapshot
+        copy.time = time
+        return copy
     }
 
     private static func makeSimulationActor(snapshot: SimulationSnapshot, parameters: [ExperimentParameter]) -> SimulationActor {
@@ -344,7 +538,7 @@ final class AppModel {
             return
         }
 
-        isPlaying = false
+        stopPlayback(resetActorToVisibleSnapshot: false)
         let potential = PotentialBuffer(values: values)
         let mass = parameters.value(for: "mass", default: SimulationUnits.defaultMass)
         let observables = ObservablesCalculator.oneD(
@@ -368,6 +562,7 @@ final class AppModel {
                 stepCount: 0
             )
         )
+        syncTimelineToSnapshot()
         simulationActor = AppModel.makeSimulationActor(snapshot: snapshot, parameters: parameters)
     }
 }

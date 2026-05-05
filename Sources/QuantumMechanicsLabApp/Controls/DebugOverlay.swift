@@ -51,7 +51,7 @@ struct DebugOverlay: View {
             if let warning = snapshot.diagnostics.warning {
                 HStack(spacing: 4) {
                     Image(systemName: "exclamationmark.triangle.fill")
-                    Text(warning.rawValue.uppercased())
+                    Text(LocalizedStringKey(warning.rawValue))
                 }
                 .font(.caption2.weight(.bold))
                 .foregroundStyle(.black)

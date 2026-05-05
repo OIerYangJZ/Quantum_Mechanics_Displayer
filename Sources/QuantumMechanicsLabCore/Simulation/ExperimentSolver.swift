@@ -5,6 +5,7 @@ public protocol ExperimentSolver: Sendable {
     var currentSnapshot: SimulationSnapshot { get }
 
     mutating func step(count: Int) -> SimulationSnapshot
+    mutating func step(deltaTime: Double) -> SimulationSnapshot
     mutating func reset(to snapshot: SimulationSnapshot)
 }
 
@@ -35,7 +36,25 @@ public struct SchrodingerSolver1D: ExperimentSolver {
         }
 
         for _ in 0..<max(count, 0) {
-            stepOnce(on: grid)
+            stepOnce(on: grid, deltaTime: timeStep)
+        }
+
+        return currentSnapshot
+    }
+
+    public mutating func step(deltaTime: Double) -> SimulationSnapshot {
+        guard deltaTime > 0 else { return currentSnapshot }
+
+        guard case let .oneD(grid) = currentSnapshot.grid else {
+            let substeps = max(1, Int(ceil(deltaTime / timeStep)))
+            currentSnapshot = currentSnapshot.advanced(by: deltaTime, stepCount: substeps)
+            return currentSnapshot
+        }
+
+        let substeps = max(1, Int(ceil(deltaTime / timeStep)))
+        let substepTime = deltaTime / Double(substeps)
+        for _ in 0..<substeps {
+            stepOnce(on: grid, deltaTime: substepTime)
         }
 
         return currentSnapshot
@@ -46,13 +65,13 @@ public struct SchrodingerSolver1D: ExperimentSolver {
         initialEnergy = snapshot.observables.totalEnergy
     }
 
-    private mutating func stepOnce(on grid: Grid1D) {
+    private mutating func stepOnce(on grid: Grid1D, deltaTime: Double) {
         var psi = currentSnapshot.psi
         let potential = currentSnapshot.potential
 
-        applyPotentialPhase(to: &psi, potential: potential, deltaTime: timeStep / 2)
-        psi = applyKineticPhase(to: psi, grid: grid)
-        applyPotentialPhase(to: &psi, potential: potential, deltaTime: timeStep / 2)
+        applyPotentialPhase(to: &psi, potential: potential, deltaTime: deltaTime / 2)
+        psi = applyKineticPhase(to: psi, grid: grid, deltaTime: deltaTime)
+        applyPotentialPhase(to: &psi, potential: potential, deltaTime: deltaTime / 2)
 
         let observables = ObservablesCalculator.oneD(
             psi: psi,
@@ -68,7 +87,7 @@ public struct SchrodingerSolver1D: ExperimentSolver {
 
         currentSnapshot = SimulationSnapshot(
             experimentID: currentSnapshot.experimentID,
-            time: currentSnapshot.time + timeStep,
+            time: currentSnapshot.time + deltaTime,
             grid: currentSnapshot.grid,
             psi: psi,
             potential: potential,
@@ -99,11 +118,11 @@ public struct SchrodingerSolver1D: ExperimentSolver {
         }
     }
 
-    private func applyKineticPhase(to psi: ComplexBuffer, grid: Grid1D) -> ComplexBuffer {
+    private func applyKineticPhase(to psi: ComplexBuffer, grid: Grid1D, deltaTime: Double) -> ComplexBuffer {
         let frequencySpace = FourierTransform.complexForward(psi.values)
         let phased = frequencySpace.enumerated().map { index, value in
             let k = momentumWaveNumber(for: index, count: grid.pointCount, length: grid.length)
-            let phase = -k * k * timeStep / (2 * mass)
+            let phase = -k * k * deltaTime / (2 * mass)
             return value * ComplexValue(real: cos(phase), imaginary: sin(phase))
         }
 
@@ -139,7 +158,7 @@ public struct SchrodingerSolver2D: ExperimentSolver {
 
     public init(
         initialSnapshot: SimulationSnapshot,
-        timeStep: Double = 0.001,
+        timeStep: Double = 0.002,
         mass: Double = SimulationUnits.defaultMass
     ) {
         self.currentSnapshot = initialSnapshot
@@ -158,7 +177,25 @@ public struct SchrodingerSolver2D: ExperimentSolver {
         }
 
         for _ in 0..<max(count, 0) {
-            stepOnce(on: grid)
+            stepOnce(on: grid, deltaTime: timeStep)
+        }
+
+        return currentSnapshot
+    }
+
+    public mutating func step(deltaTime: Double) -> SimulationSnapshot {
+        guard deltaTime > 0 else { return currentSnapshot }
+
+        guard case let .twoD(grid) = currentSnapshot.grid else {
+            let substeps = max(1, Int(ceil(deltaTime / timeStep)))
+            currentSnapshot = currentSnapshot.advanced(by: deltaTime, stepCount: substeps)
+            return currentSnapshot
+        }
+
+        let substeps = max(1, Int(ceil(deltaTime / timeStep)))
+        let substepTime = deltaTime / Double(substeps)
+        for _ in 0..<substeps {
+            stepOnce(on: grid, deltaTime: substepTime)
         }
 
         return currentSnapshot
@@ -169,13 +206,13 @@ public struct SchrodingerSolver2D: ExperimentSolver {
         initialEnergy = snapshot.observables.totalEnergy
     }
 
-    private mutating func stepOnce(on grid: Grid2D) {
+    private mutating func stepOnce(on grid: Grid2D, deltaTime: Double) {
         var psi = currentSnapshot.psi
         let potential = currentSnapshot.potential
 
-        applyPotentialPhase(to: &psi, potential: potential, deltaTime: timeStep / 2)
-        psi = applyKineticPhase(to: psi, grid: grid)
-        applyPotentialPhase(to: &psi, potential: potential, deltaTime: timeStep / 2)
+        applyPotentialPhase(to: &psi, potential: potential, deltaTime: deltaTime / 2)
+        psi = applyKineticPhase(to: psi, grid: grid, deltaTime: deltaTime)
+        applyPotentialPhase(to: &psi, potential: potential, deltaTime: deltaTime / 2)
         applyAbsorbingBoundary(to: &psi, grid: grid)
 
         let observables = ObservablesCalculator.twoD(
@@ -192,7 +229,7 @@ public struct SchrodingerSolver2D: ExperimentSolver {
 
         currentSnapshot = SimulationSnapshot(
             experimentID: currentSnapshot.experimentID,
-            time: currentSnapshot.time + timeStep,
+            time: currentSnapshot.time + deltaTime,
             grid: currentSnapshot.grid,
             psi: psi,
             potential: potential,
@@ -242,7 +279,7 @@ public struct SchrodingerSolver2D: ExperimentSolver {
         }
     }
 
-    private func applyKineticPhase(to psi: ComplexBuffer, grid: Grid2D) -> ComplexBuffer {
+    private func applyKineticPhase(to psi: ComplexBuffer, grid: Grid2D, deltaTime: Double) -> ComplexBuffer {
         let rowForward = transformRows(psi.values, grid: grid, inverse: false)
         let frequencySpace = transformColumns(rowForward, grid: grid, inverse: false)
         let phased = frequencySpace.enumerated().map { index, value in
@@ -250,7 +287,7 @@ public struct SchrodingerSolver2D: ExperimentSolver {
             let row = index / grid.width
             let kx = waveNumber(for: column, count: grid.width, length: grid.lengthX)
             let ky = waveNumber(for: row, count: grid.height, length: grid.lengthY)
-            let phase = -(kx * kx + ky * ky) * timeStep / (2 * mass)
+            let phase = -(kx * kx + ky * ky) * deltaTime / (2 * mass)
             return value * ComplexValue(real: cos(phase), imaginary: sin(phase))
         }
         let columnInverse = transformColumns(phased, grid: grid, inverse: true)
@@ -336,6 +373,24 @@ public struct OrbitalSolver: ExperimentSolver {
         }
 
         let dt = Double(count) * timeStep
+        return evolveOrbital(deltaTime: dt, stepCount: count, energy: energy)
+    }
+
+    public mutating func step(deltaTime: Double) -> SimulationSnapshot {
+        guard deltaTime > 0 else { return currentSnapshot }
+
+        guard case .orbital = currentSnapshot.grid,
+              let energy = currentSnapshot.observables.totalEnergy else {
+            let substeps = max(1, Int(ceil(deltaTime / timeStep)))
+            currentSnapshot = currentSnapshot.advanced(by: deltaTime, stepCount: substeps)
+            return currentSnapshot
+        }
+
+        let substeps = max(1, Int(ceil(deltaTime / timeStep)))
+        return evolveOrbital(deltaTime: deltaTime, stepCount: substeps, energy: energy)
+    }
+
+    private mutating func evolveOrbital(deltaTime dt: Double, stepCount: Int, energy: Double) -> SimulationSnapshot {
         var psi = currentSnapshot.psi
         let phase = -energy * dt / SimulationUnits.hbar
         let multiplier = ComplexValue(real: cos(phase), imaginary: sin(phase))
@@ -356,7 +411,7 @@ public struct OrbitalSolver: ExperimentSolver {
                 energy: currentSnapshot.diagnostics.energy,
                 energyDrift: currentSnapshot.diagnostics.energyDrift,
                 maxProbabilityDensity: currentSnapshot.diagnostics.maxProbabilityDensity,
-                stepCount: currentSnapshot.diagnostics.stepCount + count,
+                stepCount: currentSnapshot.diagnostics.stepCount + stepCount,
                 warning: currentSnapshot.diagnostics.warning
             )
         )

@@ -13,6 +13,15 @@ mkdir -p "$MACOS_DIR"
 cp "$ROOT_DIR/.build/arm64-apple-macosx/debug/$BINARY_NAME" "$MACOS_DIR/$BINARY_NAME"
 chmod +x "$MACOS_DIR/$BINARY_NAME"
 
+RESOURCES_DIR="$APP_DIR/Contents/Resources"
+mkdir -p "$RESOURCES_DIR"
+
+# Copy localized resources
+if [ -d "$ROOT_DIR/Sources/QuantumMechanicsLabApp/Resources" ]; then
+    cp -R "$ROOT_DIR/Sources/QuantumMechanicsLabApp/Resources/"* "$RESOURCES_DIR/"
+fi
+
+
 cat > "$APP_DIR/Contents/Info.plist" <<'PLIST'
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN"
@@ -33,6 +42,13 @@ cat > "$APP_DIR/Contents/Info.plist" <<'PLIST'
   <string>0.1.0</string>
   <key>CFBundleVersion</key>
   <string>1</string>
+  <key>CFBundleDevelopmentRegion</key>
+  <string>en</string>
+  <key>CFBundleLocalizations</key>
+  <array>
+    <string>en</string>
+    <string>zh-Hans</string>
+  </array>
   <key>LSMinimumSystemVersion</key>
   <string>15.0</string>
   <key>NSHighResolutionCapable</key>

@@ -20,6 +20,10 @@ public actor SimulationActor {
         solver.step(count: count)
     }
 
+    public func step(deltaTime: Double) -> SimulationSnapshot {
+        solver.step(deltaTime: deltaTime)
+    }
+
     public func reset(to snapshot: SimulationSnapshot) {
         solver.reset(to: snapshot)
     }

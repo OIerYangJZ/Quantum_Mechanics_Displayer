@@ -4,9 +4,21 @@ import SwiftUI
 struct NavigationShell: View {
     @Environment(AppModel.self) private var appModel
 
+    @AppStorage("appLanguage") private var appLanguage: String = "system"
+
     var body: some View {
         NavigationSplitView {
             List {
+                Picker("Language", selection: $appLanguage) {
+                    Text("System").tag("system")
+                    Text("English").tag("en")
+                    Text("中文").tag("zh-Hans")
+                }
+                .pickerStyle(.segmented)
+                .padding(.bottom, 8)
+                .listRowBackground(Color.clear)
+                .listRowInsets(EdgeInsets(top: 10, leading: 16, bottom: 0, trailing: 16))
+
                 ForEach(appModel.groupedExperiments, id: \.0) { category, experiments in
                     Section(category.title) {
                         ForEach(experiments) { experiment in
@@ -47,17 +59,7 @@ struct NavigationShell: View {
                 .background(.regularMaterial)
             }
             .background(Color(red: 0.05, green: 0.06, blue: 0.07))
-            .navigationTitle(appModel.selectedExperiment.title)
-            .task(id: appModel.isPlaying) {
-                await runPlaybackLoopIfNeeded()
-            }
-        }
-    }
-
-    private func runPlaybackLoopIfNeeded() async {
-        while appModel.isPlaying && !Task.isCancelled {
-            try? await Task.sleep(nanoseconds: 16_666_667)
-            await appModel.stepOnce()
+            .navigationTitle(LocalizedStringKey(appModel.selectedExperiment.title))
         }
     }
 }
@@ -76,10 +78,10 @@ private struct ExperimentRow: View {
                 .symbolEffect(.pulse, options: .repeating, isActive: isSelected)
 
             VStack(alignment: .leading, spacing: 4) {
-                Text(title)
+                Text(LocalizedStringKey(title))
                     .font(.headline)
                     .foregroundStyle(isSelected ? .primary : .secondary)
-                Text(summary)
+                Text(LocalizedStringKey(summary))
                     .font(.caption)
                     .foregroundStyle(isSelected ? .secondary : .tertiary)
                     .lineLimit(2)

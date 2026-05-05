@@ -6,6 +6,28 @@ public struct DoubleWellExperiment: Experiment {
     public let category = ExperimentCategory.oneD
     public let summary = "A wavepacket tunneling back and forth between two adjacent potential wells."
 
+
+    public var explanation: String {
+        """
+        The double well potential is a classic model for quantum tunneling and spontaneous symmetry breaking. If a particle starts purely in one well, it is not in an energy eigenstate. Instead, it is a superposition of the symmetric (lower energy) and antisymmetric (higher energy) ground states. The phase difference between these states evolves over time, causing the probability density to slowly "leak" through the barrier and slosh back and forth. This is known as Rabi oscillation. Try the "Symmetric Tunneling" preset and hit play, or try "Asymmetric Localization" by making the right well much wider.
+        """
+    }
+
+    public var builtInPresets: [ExperimentPreset] {
+        [
+            ExperimentPreset(experimentID: "double-well", name: "Symmetric Tunneling", parameters: [
+                ExperimentParameter(id: "barrierHeight", label: "Barrier Height", value: 15, range: 0...50),
+                ExperimentParameter(id: "barrierWidth", label: "Barrier Width", value: 0.5, range: 0.1...2),
+                ExperimentParameter(id: "wellWidth", label: "Well Width", value: 2, range: 1...5)
+            ]),
+            ExperimentPreset(experimentID: "double-well", name: "High Barrier (Slower Tunneling)", parameters: [
+                ExperimentParameter(id: "barrierHeight", label: "Barrier Height", value: 30, range: 0...50),
+                ExperimentParameter(id: "barrierWidth", label: "Barrier Width", value: 0.5, range: 0.1...2),
+                ExperimentParameter(id: "wellWidth", label: "Well Width", value: 2, range: 1...5)
+            ])
+        ]
+    }
+
     public var defaultParameters: [ExperimentParameter] {
         [
             ExperimentParameter(id: "barrierHeight", label: "Barrier Height", value: 15, range: 0...50),

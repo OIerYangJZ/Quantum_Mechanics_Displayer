@@ -6,6 +6,33 @@ public struct FiniteSquareWellExperiment: Experiment {
     public let category = ExperimentCategory.oneD
     public let summary = "A wavepacket interacting with an attractive finite square well potential."
 
+
+
+
+
+
+    public var explanation: String {
+        """
+        Unlike the infinite well, the walls here have a finite energy height. This means the wavefunction does not abruptly drop to zero at the edges; instead, it penetrates into the classically forbidden region (the walls) with exponential decay. If the well is shallow or the particle has high energy, it can escape. Notice how the wavepacket leaks outside the well boundaries during reflections.
+        """
+    }
+    public var builtInPresets: [ExperimentPreset] {
+        [
+            ExperimentPreset(experimentID: "finite-square-well", name: "Deep Well (Strong Trapping)", parameters: [
+                ExperimentParameter(id: "depth", label: "Well Depth", value: 15, range: 0...30),
+                ExperimentParameter(id: "width", label: "Well Width", value: 3, range: 0.5...8),
+                ExperimentParameter(id: "momentum", label: "Initial Momentum", value: 0, range: 0...10),
+                ExperimentParameter(id: "mass", label: "Mass", value: 1, range: 0.1...5)
+            ]),
+            ExperimentPreset(experimentID: "finite-square-well", name: "Shallow Well (Escape)", parameters: [
+                ExperimentParameter(id: "depth", label: "Well Depth", value: 3, range: 0...30),
+                ExperimentParameter(id: "width", label: "Well Width", value: 2, range: 0.5...8),
+                ExperimentParameter(id: "momentum", label: "Initial Momentum", value: 5, range: 0...10),
+                ExperimentParameter(id: "mass", label: "Mass", value: 1, range: 0.1...5)
+            ])
+        ]
+    }
+
     public var defaultParameters: [ExperimentParameter] {
         [
             ExperimentParameter(id: "depth", label: "Well Depth", value: 6, range: 0...15),

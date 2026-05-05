@@ -6,6 +6,28 @@ public struct FiniteBarrierExperiment: Experiment {
     public let category = ExperimentCategory.oneD
     public let summary = "A wavepacket partially reflects and partially tunnels through a finite barrier."
 
+
+    public var explanation: String {
+        """
+        This experiment visualizes quantum tunneling and reflection. When a particle encounters a finite potential barrier, classical mechanics dictates it will bounce back if its energy is less than the barrier height. In quantum mechanics, the wavefunction decays exponentially inside the barrier but does not immediately drop to zero. If the barrier is thin enough, a transmitted wave emerges on the other side. Try the "Deep Tunneling" preset to see a small fraction of the wave survive the barrier.
+        """
+    }
+
+    public var builtInPresets: [ExperimentPreset] {
+        [
+            ExperimentPreset(experimentID: "finite-barrier", name: "Partial Tunneling", parameters: [
+                ExperimentParameter(id: "barrierHeight", label: "Barrier Height", value: 8, range: 0...12),
+                ExperimentParameter(id: "barrierWidth", label: "Barrier Width", value: 0.5, range: 0.1...4),
+                ExperimentParameter(id: "momentum", label: "Initial Momentum", value: 5, range: 0...12)
+            ]),
+            ExperimentPreset(experimentID: "finite-barrier", name: "Total Reflection (Thick Barrier)", parameters: [
+                ExperimentParameter(id: "barrierHeight", label: "Barrier Height", value: 10, range: 0...12),
+                ExperimentParameter(id: "barrierWidth", label: "Barrier Width", value: 2.0, range: 0.1...4),
+                ExperimentParameter(id: "momentum", label: "Initial Momentum", value: 3, range: 0...12)
+            ])
+        ]
+    }
+
     public var defaultParameters: [ExperimentParameter] {
         [
             ExperimentParameter(id: "barrierHeight", label: "Barrier Height", value: 3, range: 0...12),

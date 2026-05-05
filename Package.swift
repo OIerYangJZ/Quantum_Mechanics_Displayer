@@ -4,6 +4,7 @@ import PackageDescription
 
 let package = Package(
     name: "QuantumMechanicsLab",
+    defaultLocalization: "en",
     platforms: [
         .iOS(.v18),
         .macOS(.v15)
@@ -23,10 +24,13 @@ let package = Package(
         )
     ],
     targets: [
-        .target(name: "QuantumMechanicsLabCore"),
+        .target(
+            name: "QuantumMechanicsLabCore"
+        ),
         .executableTarget(
             name: "QuantumMechanicsLabApp",
-            dependencies: ["QuantumMechanicsLabCore"]
+            dependencies: ["QuantumMechanicsLabCore"],
+            resources: [.process("Resources")]
         ),
         .executableTarget(
             name: "QuantumMechanicsLabCoreSmokeTests",

@@ -6,6 +6,31 @@ public struct InfiniteSquareWellExperiment: Experiment {
     public let category = ExperimentCategory.oneD
     public let summary = "Gaussian wavepacket reflected by steep wall potentials inside a larger FFT domain."
 
+
+
+
+
+
+    public var explanation: String {
+        """
+        The Infinite Square Well (Particle in a Box) is the simplest quantum system. Because the walls are infinitely high, the wavefunction must be exactly zero at the boundaries. This boundary condition forces the allowed states (eigenstates) to be standing waves with quantized energy levels proportional to n^2. A Gaussian wavepacket placed inside will bounce back and forth, interfering with its own reflection to create complex, temporary fractal patterns before eventually undergoing quantum revival.
+        """
+    }
+    public var builtInPresets: [ExperimentPreset] {
+        [
+            ExperimentPreset(experimentID: "infinite-square-well", name: "Fast Bouncing", parameters: [
+                ExperimentParameter(id: "width", label: "Box Width", value: 10, range: 2...20),
+                ExperimentParameter(id: "momentum", label: "Initial Momentum", value: 8, range: -15...15),
+                ExperimentParameter(id: "mass", label: "Mass", value: 1, range: 0.1...5)
+            ]),
+            ExperimentPreset(experimentID: "infinite-square-well", name: "Broad Packet", parameters: [
+                ExperimentParameter(id: "width", label: "Box Width", value: 15, range: 2...20),
+                ExperimentParameter(id: "momentum", label: "Initial Momentum", value: 0, range: -15...15),
+                ExperimentParameter(id: "mass", label: "Mass", value: 1, range: 0.1...5)
+            ])
+        ]
+    }
+
     public var defaultParameters: [ExperimentParameter] {
         [
             ExperimentParameter(id: "mass", label: "Mass", value: 1, range: 0.1...5),

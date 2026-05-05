@@ -6,6 +6,36 @@ public struct HydrogenOrbitalExperiment: Experiment {
     public let category = ExperimentCategory.orbitals
     public let summary = "Analytic hydrogen orbital density and phase for selected quantum numbers."
 
+
+
+
+
+
+    public var explanation: String {
+        """
+        Hydrogen orbitals are the exact 3D stationary states of an electron bound to a proton by Coulomb attraction. They are defined by three quantum numbers: principal (n) for energy/size, azimuthal (l) for orbital angular momentum (s, p, d, f shapes), and magnetic (m) for spatial orientation. This visualization shows a 2D slice through the center of the atom. Notice the radial nodes (rings of zero probability) and angular nodes (lines of zero probability) as n and l increase.
+        """
+    }
+    public var builtInPresets: [ExperimentPreset] {
+        [
+            ExperimentPreset(experimentID: "hydrogen-orbitals", name: "1s Orbital (Ground State)", parameters: [
+                ExperimentParameter(id: "n", label: "Principal (n)", value: 1, range: 1...5),
+                ExperimentParameter(id: "l", label: "Azimuthal (l)", value: 0, range: 0...4),
+                ExperimentParameter(id: "m", label: "Magnetic (m)", value: 0, range: -4...4)
+            ]),
+            ExperimentPreset(experimentID: "hydrogen-orbitals", name: "2p Orbital", parameters: [
+                ExperimentParameter(id: "n", label: "Principal (n)", value: 2, range: 1...5),
+                ExperimentParameter(id: "l", label: "Azimuthal (l)", value: 1, range: 0...4),
+                ExperimentParameter(id: "m", label: "Magnetic (m)", value: 1, range: -4...4)
+            ]),
+            ExperimentPreset(experimentID: "hydrogen-orbitals", name: "3d Orbital", parameters: [
+                ExperimentParameter(id: "n", label: "Principal (n)", value: 3, range: 1...5),
+                ExperimentParameter(id: "l", label: "Azimuthal (l)", value: 2, range: 0...4),
+                ExperimentParameter(id: "m", label: "Magnetic (m)", value: 0, range: -4...4)
+            ])
+        ]
+    }
+
     public var defaultParameters: [ExperimentParameter] {
         [
             ExperimentParameter(id: "n", label: "n", value: 1, range: 1...5),

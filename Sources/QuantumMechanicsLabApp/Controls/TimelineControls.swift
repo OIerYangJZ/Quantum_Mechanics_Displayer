@@ -8,7 +8,7 @@ struct TimelineControls: View {
             Button {
                 appModel.togglePlayback()
             } label: {
-                Label(appModel.isPlaying ? "Pause" : "Play", systemImage: appModel.isPlaying ? "pause.fill" : "play.fill")
+                Label(appModel.isPlaying ? LocalizedStringKey("Pause") : LocalizedStringKey("Play"), systemImage: appModel.isPlaying ? "pause.fill" : "play.fill")
                     .font(.headline)
                     .padding(.horizontal, 8)
                     .padding(.vertical, 4)
@@ -48,10 +48,10 @@ struct TimelineControls: View {
             HStack(spacing: 6) {
                 Image(systemName: "clock")
                     .foregroundStyle(.cyan)
-                Text(appModel.snapshot.time, format: .number.precision(.fractionLength(2)))
+                Text(appModel.timelineTime, format: .number.precision(.fractionLength(4)))
                     .monospacedDigit()
                     .fontWeight(.medium)
-                    .frame(minWidth: 50, alignment: .leading)
+                    .frame(minWidth: 76, alignment: .leading)
             }
         }
     }

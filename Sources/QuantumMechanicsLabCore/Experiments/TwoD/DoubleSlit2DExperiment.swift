@@ -6,6 +6,28 @@ public struct DoubleSlit2DExperiment: Experiment {
     public let category = ExperimentCategory.twoD
     public let summary = "A two-dimensional packet forming an interference pattern after passing through two slits."
 
+
+    public var explanation: String {
+        """
+        The double-slit experiment is the quintessential demonstration of wave-particle duality. When a coherent wavepacket arrives at the barrier, the two slits act as secondary point sources. As these two new waves expand, their peaks and troughs overlap, creating regions of constructive interference (bright fringes) and destructive interference (dark nodes). Notice how changing the initial momentum (wavelength) or slit separation alters the fringe spacing.
+        """
+    }
+
+    public var builtInPresets: [ExperimentPreset] {
+        [
+            ExperimentPreset(experimentID: "double-slit-2d", name: "Standard Interference", parameters: [
+                ExperimentParameter(id: "slitSeparation", label: "Slit Separation", value: 3, range: 0.5...8),
+                ExperimentParameter(id: "slitWidth", label: "Slit Width", value: 0.5, range: 0.1...2),
+                ExperimentParameter(id: "momentum", label: "Initial Momentum", value: 5, range: 0...12)
+            ]),
+            ExperimentPreset(experimentID: "double-slit-2d", name: "Fast Particle (Narrow Fringes)", parameters: [
+                ExperimentParameter(id: "slitSeparation", label: "Slit Separation", value: 3, range: 0.5...8),
+                ExperimentParameter(id: "slitWidth", label: "Slit Width", value: 0.5, range: 0.1...2),
+                ExperimentParameter(id: "momentum", label: "Initial Momentum", value: 10, range: 0...12)
+            ])
+        ]
+    }
+
     public var defaultParameters: [ExperimentParameter] {
         [
             ExperimentParameter(id: "slitSeparation", label: "Slit Separation", value: 3, range: 0.5...8),

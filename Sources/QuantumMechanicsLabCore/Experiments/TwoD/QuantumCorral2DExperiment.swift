@@ -6,6 +6,31 @@ public struct QuantumCorral2DExperiment: Experiment {
     public let category = ExperimentCategory.twoD
     public let summary = "A wavepacket confined within a circular ring of potential, forming complex standing waves."
 
+
+
+
+
+
+    public var explanation: String {
+        """
+        A quantum corral is formed by a ring of impenetrable potential barriers. When a wavepacket is dropped inside, the circular boundary reflects the waves back to the center. Because of the high symmetry, these reflections overlap perfectly to form highly intricate, stable standing wave patterns (ripples).
+        """
+    }
+    public var builtInPresets: [ExperimentPreset] {
+        [
+            ExperimentPreset(experimentID: "quantum-corral-2d", name: "Large Corral", parameters: [
+                ExperimentParameter(id: "radius", label: "Corral Radius", value: 6, range: 2...8),
+                ExperimentParameter(id: "thickness", label: "Wall Thickness", value: 0.5, range: 0.2...2),
+                ExperimentParameter(id: "height", label: "Wall Height", value: 80, range: 10...100)
+            ]),
+            ExperimentPreset(experimentID: "quantum-corral-2d", name: "Tight Squeeze", parameters: [
+                ExperimentParameter(id: "radius", label: "Corral Radius", value: 3, range: 2...8),
+                ExperimentParameter(id: "thickness", label: "Wall Thickness", value: 0.5, range: 0.2...2),
+                ExperimentParameter(id: "height", label: "Wall Height", value: 80, range: 10...100)
+            ])
+        ]
+    }
+
     public var defaultParameters: [ExperimentParameter] {
         [
             ExperimentParameter(id: "radius", label: "Corral Radius", value: 5, range: 2...8),

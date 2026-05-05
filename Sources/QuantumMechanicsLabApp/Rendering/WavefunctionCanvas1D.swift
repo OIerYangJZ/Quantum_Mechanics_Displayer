@@ -5,6 +5,8 @@ struct WavefunctionCanvas1D: View {
     @Environment(AppModel.self) private var appModel
     var snapshot: SimulationSnapshot
 
+    @State private var isDragging = false
+
     var body: some View {
         GeometryReader { proxy in
             Canvas { context, size in
@@ -16,6 +18,13 @@ struct WavefunctionCanvas1D: View {
             .gesture(
                 DragGesture(minimumDistance: 0)
                     .onChanged { value in
+                        if !isDragging {
+                            isDragging = true
+                            if snapshot.experimentID == "custom-potential" {
+                                appModel.prepareForPotentialStroke()
+                            }
+                        }
+
                         let size = proxy.size
                         guard size.width > 0, size.height > 0 else { return }
                         let hPos = value.location.x / size.width
@@ -30,6 +39,7 @@ struct WavefunctionCanvas1D: View {
                         }
                     }
                     .onEnded { value in
+                        isDragging = false
                         // Treat a short drag without much movement as a tap if playing
                         let size = proxy.size
                         guard size.width > 0, size.height > 0 else { return }

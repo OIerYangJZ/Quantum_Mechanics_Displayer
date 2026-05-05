@@ -64,6 +64,8 @@ public protocol Experiment: Identifiable, Sendable {
     var title: String { get }
     var category: ExperimentCategory { get }
     var summary: String { get }
+    var explanation: String { get }
+    var builtInPresets: [ExperimentPreset] { get }
     var defaultParameters: [ExperimentParameter] { get }
     var story: [StoryStep] { get }
 
@@ -73,6 +75,14 @@ public protocol Experiment: Identifiable, Sendable {
 }
 
 public extension Experiment {
+    var explanation: String {
+        "This experiment demonstrates fundamental quantum mechanical principles. Adjust the parameters to observe how the wavefunction evolves over time."
+    }
+    
+    var builtInPresets: [ExperimentPreset] {
+        []
+    }
+    
     func makeInitialSnapshot(parameters: [ExperimentParameter]) -> SimulationSnapshot {
         makeInitialSnapshot()
     }
@@ -83,6 +93,8 @@ public struct AnyExperiment: Identifiable, Sendable {
     public var title: String
     public var category: ExperimentCategory
     public var summary: String
+    public var explanation: String
+    public var builtInPresets: [ExperimentPreset]
     public var defaultParameters: [ExperimentParameter]
     public var story: [StoryStep]
     private var initialSnapshotFactory: @Sendable () -> SimulationSnapshot
@@ -94,6 +106,8 @@ public struct AnyExperiment: Identifiable, Sendable {
         self.title = experiment.title
         self.category = experiment.category
         self.summary = experiment.summary
+        self.explanation = experiment.explanation
+        self.builtInPresets = experiment.builtInPresets
         self.defaultParameters = experiment.defaultParameters
         self.story = experiment.story
         self.initialSnapshotFactory = { experiment.makeInitialSnapshot() }

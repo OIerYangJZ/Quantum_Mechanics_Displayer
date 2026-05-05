@@ -45,6 +45,22 @@ final class NumericalReferenceTests: XCTestCase {
         XCTAssertNil(evolved.diagnostics.warning)
     }
 
+    func testOneDSolverAcceptsContinuousDeltaTime() throws {
+        let experiment = try XCTUnwrap(ExperimentCatalog.experiment(id: "infinite-square-well"))
+        let initialSnapshot = experiment.makeInitialSnapshot()
+        var solver = SchrodingerSolver1D(initialSnapshot: initialSnapshot, timeStep: 0.002)
+
+        let evolved = solver.step(deltaTime: 0.0037)
+
+        guard case let .oneD(grid) = evolved.grid else {
+            return XCTFail("Expected a 1D grid.")
+        }
+
+        XCTAssertEqual(evolved.time, 0.0037, accuracy: 1e-12)
+        XCTAssertEqual(evolved.diagnostics.stepCount, 2)
+        XCTAssertEqual(evolved.psi.norm(spacing: grid.spacing), 1, accuracy: 1e-8)
+    }
+
     func testDoubleSlitInitialStateHasDensityAndPotential() throws {
         let experiment = try XCTUnwrap(ExperimentCatalog.experiment(id: "double-slit-2d"))
         let snapshot = experiment.makeInitialSnapshot()

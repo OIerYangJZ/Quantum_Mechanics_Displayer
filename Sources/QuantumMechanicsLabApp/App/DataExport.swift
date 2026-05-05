@@ -57,3 +57,24 @@ struct CSVDataDocument: FileDocument {
         return FileWrapper(regularFileWithContents: data)
     }
 }
+
+struct SharedConfigDocument: FileDocument {
+    static var readableContentTypes: [UTType] { [.json] }
+    var config: SharedExperimentConfig
+
+    init(config: SharedExperimentConfig) {
+        self.config = config
+    }
+
+    init(configuration: ReadConfiguration) throws {
+        let data = configuration.file.regularFileContents ?? Data()
+        self.config = try JSONDecoder().decode(SharedExperimentConfig.self, from: data)
+    }
+
+    func fileWrapper(configuration: WriteConfiguration) throws -> FileWrapper {
+        let encoder = JSONEncoder()
+        encoder.outputFormatting = .prettyPrinted
+        let data = try encoder.encode(config)
+        return FileWrapper(regularFileWithContents: data)
+    }
+}

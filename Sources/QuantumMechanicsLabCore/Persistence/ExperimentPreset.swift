@@ -21,3 +21,15 @@ public struct ExperimentPreset: Codable, Sendable, Identifiable, Equatable {
         self.customPotentialValues = customPotentialValues
     }
 }
+
+public struct SharedExperimentConfig: Codable, Sendable {
+    public var experimentID: String
+    public var parameters: [ExperimentParameter]
+    public var customPotentialValues: [Double]?
+    
+    public init(experimentID: String, parameters: [ExperimentParameter], customPotentialValues: [Double]? = nil) {
+        self.experimentID = experimentID
+        self.parameters = parameters
+        self.customPotentialValues = customPotentialValues
+    }
+}

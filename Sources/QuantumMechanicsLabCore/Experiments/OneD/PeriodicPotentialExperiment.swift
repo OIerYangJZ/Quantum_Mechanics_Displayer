@@ -6,6 +6,33 @@ public struct PeriodicPotentialExperiment: Experiment {
     public let category = ExperimentCategory.oneD
     public let summary = "A wavepacket moving through a periodic crystal lattice potential (Kronig-Penney model)."
 
+
+
+
+
+
+    public var explanation: String {
+        """
+        The Kronig-Penney model demonstrates electrons moving through a crystal lattice. The periodic arrangement of barriers creates energy bands and gaps. If the particle energy falls into a conduction band, it will travel through the entire lattice almost freely, despite the barriers. If it falls into a band gap, it will suffer Bragg reflection and be completely repelled.
+        """
+    }
+    public var builtInPresets: [ExperimentPreset] {
+        [
+            ExperimentPreset(experimentID: "periodic-potential", name: "Conduction Band (Transmission)", parameters: [
+                ExperimentParameter(id: "latticeSpacing", label: "Lattice Spacing", value: 1.5, range: 0.5...4),
+                ExperimentParameter(id: "barrierWidth", label: "Barrier Width", value: 0.2, range: 0.05...1),
+                ExperimentParameter(id: "barrierHeight", label: "Barrier Height", value: 5, range: 0...40),
+                ExperimentParameter(id: "momentum", label: "Initial Momentum", value: 8, range: 0...15)
+            ]),
+            ExperimentPreset(experimentID: "periodic-potential", name: "Band Gap (Bragg Reflection)", parameters: [
+                ExperimentParameter(id: "latticeSpacing", label: "Lattice Spacing", value: 1.5, range: 0.5...4),
+                ExperimentParameter(id: "barrierWidth", label: "Barrier Width", value: 0.2, range: 0.05...1),
+                ExperimentParameter(id: "barrierHeight", label: "Barrier Height", value: 15, range: 0...40),
+                ExperimentParameter(id: "momentum", label: "Initial Momentum", value: 2, range: 0...15)
+            ])
+        ]
+    }
+
     public var defaultParameters: [ExperimentParameter] {
         [
             ExperimentParameter(id: "latticeSpacing", label: "Lattice Spacing", value: 1.5, range: 0.5...4),
